@@ -7,64 +7,56 @@ async def get_categories():
         c["_id"] = str(c["_id"])
     return categories
 
-async def get_menu_items(category_id: str = None, sort_by: str = None, order: str = "asc"):
+async def get_menu_items(
+    category_id: str = None,
+    sort_by: str = None,
+    order: str = "asc"
+):
     query = {}
+    # фільтрація
     if category_id:
-        query["category_id"] = ObjectId(category_id)
+        try:
+            query["category_id"] = ObjectId(category_id)
+        except:
+            return []
     cursor = menu_items_collection.find(query)
-
     # сортування
-    if sort_by:
+    if sort_by in ["name", "price"]:
         direction = 1 if order == "asc" else -1
         cursor = cursor.sort(sort_by, direction)
-
     items = await cursor.to_list(100)
-
-    for i in items:
-        i["_id"] = str(i["_id"])
-        i["category_id"] = str(i["category_id"])
-
+    # форматування
+    for item in items:
+        item["_id"] = str(item["_id"])
+        item["category_id"] = str(item["category_id"])
     return items
 
-
-# ADMIN - створити нову страву
+# admin - створити нову страву
 async def create_menu_item(item: dict):
-
     item["category_id"] = ObjectId(item["category_id"])
-
     result = await menu_items_collection.insert_one(item)
-
     return {
         "message": "Menu item created",
         "item_id": str(result.inserted_id)
     }
 
-
-# ADMIN - редагувати страву
+# admin - редагувати страву
 async def update_menu_item(item_id: str, item: dict):
-
     if "category_id" in item:
         item["category_id"] = ObjectId(item["category_id"])
-
     result = await menu_items_collection.update_one(
         {"_id": ObjectId(item_id)},
         {"$set": item}
     )
-
     if result.matched_count == 0:
         return {"error": "Item not found"}
-
     return {"message": "Menu item updated"}
 
-
-# ADMIN - видалити страву
+# admin - видалити страву
 async def delete_menu_item(item_id: str):
-
     result = await menu_items_collection.delete_one(
         {"_id": ObjectId(item_id)}
     )
-
     if result.deleted_count == 0:
         return {"error": "Item not found"}
-
     return {"message": "Menu item deleted"}
