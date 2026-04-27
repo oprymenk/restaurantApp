@@ -1,22 +1,21 @@
-from pydantic import BaseModel, Field
-from typing import Optional
-from datetime import datetime
+from pydantic import BaseModel, field_validator
+from typing import List, Optional
+
+class OrderItemCreate(BaseModel):
+    menu_item_id: str
+    quantity: int
+
+class OrderCreate(BaseModel):
+    address: str
+    items: List[OrderItemCreate]
 
 class Order(BaseModel):
-    id: str = Field(default_factory=str, alias="_id")
+    id: str
     user_id: str
     order_type: str = "delivery"
     status: str = "pending"
-    address: Optional[str]
+    address: Optional[str] = None
     total_price: float
-    created_at: datetime
-    estimated_time: Optional[int]
-    assigned_courier: Optional[str]
-
-class OrderItem(BaseModel):
-    id: str = Field(default_factory=str, alias="_id")
-    order_id: str
-    menu_item_id: str
-    quantity: int
-    price: float
-    status: str = "waiting"
+    created_at: str
+    estimated_time: Optional[int] = 30
+    assigned_courier: Optional[str] = None
