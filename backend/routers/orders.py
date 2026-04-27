@@ -1,82 +1,57 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from backend.services.order_service import *
-from backend.utils.dependencies import require_role
+from backend.models.order_model import OrderCreate
+from backend.utils.dependencies import get_current_user, require_role
 
 router = APIRouter(prefix="/orders", tags=["ORDERS"])
 
 
-# CLIENT - створення замовлення
+# create order
 @router.post("/")
 async def create(
-        order: dict,
-        current_user=Depends(require_role(["user"]))
+    order: OrderCreate,
+    current_user=Depends(get_current_user)
 ):
-    order_id = await create_order(
+    order_id, total = await create_order(
         current_user["_id"],
-        order["address"],
-        order["items"],
-        order["total_price"]
+        order.address,
+        [item.dict() for item in order.items]
     )
-    return {"order_id": order_id}
+    return {
+        "order_id": order_id,
+        "total_price": total
+    }
 
-
-# CLIENT - перегляд своїх замовлень
+# my orders
 @router.get("/my")
 async def my_orders(
-        current_user=Depends(require_role(["user"]))
+    current_user=Depends(get_current_user)
 ):
     return await get_orders_by_user(current_user["_id"])
 
-
-#  MANAGER - підтвердити
+# manager
 @router.patch("/{order_id}/confirm")
-async def confirm_order(
-        order_id: str,
-        current_user=Depends(require_role(["manager"]))
-):
+async def confirm_order(order_id: str, current_user=Depends(require_role(["manager"]))):
     return await update_order_status(order_id, "confirmed")
 
-
-# MANAGER - відправити на кухню
 @router.patch("/{order_id}/send-to-kitchen")
-async def send_to_kitchen(
-        order_id: str,
-        current_user=Depends(require_role(["manager"]))
-):
+async def send_to_kitchen(order_id: str, current_user=Depends(require_role(["manager"]))):
     return await update_order_status(order_id, "cooking")
 
+@router.patch("/{order_id}/complete")
+async def complete(order_id: str, current_user=Depends(require_role(["manager"]))):
+    return await update_order_status(order_id, "completed")
 
-# KITCHEN - змінити статус cooking - ready
+# kitchen
 @router.patch("/{order_id}/ready")
-async def ready_order(
-        order_id: str,
-        current_user=Depends(require_role(["kitchen"]))
-):
+async def ready_order(order_id: str, current_user=Depends(require_role(["kitchen"]))):
     return await update_order_status(order_id, "ready")
 
-
-# COURIER - взяти замовлення
+# courier
 @router.patch("/{order_id}/take")
-async def take_order(
-        order_id: str,
-        current_user=Depends(require_role(["courier"]))
-):
+async def take_order(order_id: str, current_user=Depends(require_role(["courier"]))):
     return await update_order_status(order_id, "delivering")
 
-
-# COURIER - доставлено
 @router.patch("/{order_id}/delivered")
-async def delivered(
-        order_id: str,
-        current_user=Depends(require_role(["courier"]))
-):
+async def delivered(order_id: str, current_user=Depends(require_role(["courier"]))):
     return await update_order_status(order_id, "delivered")
-
-
-# MANAGER - завершити
-@router.patch("/{order_id}/complete")
-async def complete(
-        order_id: str,
-        current_user=Depends(require_role(["manager"]))
-):
-    return await update_order_status(order_id, "completed")
