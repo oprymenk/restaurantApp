@@ -1,31 +1,35 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, EmailStr
-from backend.db import users_collection
-from backend.utils.security import hash_password
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
+
+from backend.validators.auth_validator import UserRegisterValidator
+from backend.services.auth_service import register_user, get_user_by_email
+from backend.utils.security import verify_password, create_access_token, create_refresh_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-class UserRegister(BaseModel):
-    name: str
-    email: EmailStr
-    phone: str
-    role: str  # user, manager, admin, kitchen, courier, payment_system
-    password: str
 
 @router.post("/register")
-async def register(user: UserRegister):
-    try:
-        existing = await users_collection.find_one({"email": user.email})
-        if existing:
-            raise HTTPException(status_code=400, detail="Email already registered")
+async def register(user: UserRegisterValidator):
+    existing = await get_user_by_email(user.email)
+    if existing:
+        raise HTTPException(400, "Email already exists")
+    user_id = await register_user(user.dict())
+    return {"user_id": user_id}
 
-        user_dict = user.dict()
-        user_dict["password"] = hash_password(user.password)
-        user_dict["created_at"] = "2026-04-02"
 
-        result = await users_collection.insert_one(user_dict)
-        return {"user_id": str(result.inserted_id)}
-
-    except Exception as e:
-        print("Register error:", e)
-        raise HTTPException(status_code=500, detail=str(e))
+@router.post("/login")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await get_user_by_email(form_data.username)
+    if not user or not verify_password(form_data.password, user["password"]):
+        raise HTTPException(401, "Invalid credentials")
+    access_token = create_access_token(
+        {"user_id": str(user["_id"]), "role": user["role"]}
+    )
+    refresh_token = create_refresh_token(
+        {"user_id": str(user["_id"])}
+    )
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
