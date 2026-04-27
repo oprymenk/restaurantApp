@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Anime Bite</title>
+  <link rel="stylesheet" href="/static/assets/css/styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <img src="/static/assets/images/logo.jpg" alt="logo">
+    Kage <span>Ramen</span>
+  </div>
+
+  <nav>
+    <a href="#">Головна</a>
+    <a href="#menu">Меню</a>
+    <a href="#about">Про нас</a>
+    <a href="#booking">Контакти</a>
+  </nav>
+
+  <button class="hero-btn" onclick="openAuth()">Увійти</button>
+</header>
+
+<section class="hero">
+  <div class="hero-text">
+    <h1>
+      СХОВАЙСЯ В ТІНІ <span>СМАКУ</span><br>
+      РАЗОМ ІЗ <span>НІНДЗЯ</span>
+    </h1>
+    <p>Азійська кухня</p>
+
+    <button class="hero-btn">Переглянути меню</button>
+  </div>
+</section>
+
+<section id="menu" class="menu">
+  <h2>НАШЕ МЕНЮ</h2>
+  <div class="menu-grid" id="menu-container"></div>
+</section>
+
+<footer>
+  <p>© 2026 Anime Bite</p>
+</footer>
+
+<div id="auth-modal"></div>
+
+<script src="/static/assets/js/auth.js"></script>
+
+</body>
+</html>
