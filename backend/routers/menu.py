@@ -10,23 +10,29 @@ from backend.utils.dependencies import require_role
 
 router = APIRouter(prefix="/menu", tags=["MENU"])
 
-# CLIENT
+# client
 @router.get("/categories")
 async def list_categories():
     return await get_categories()
 
-
-# CLIENT
+# client
 @router.get("/items")
 async def list_menu_items(
-        category: str | None = None,
-        sort_by: str | None = Query(None, enum=["name", "price"]),
-        order: str = Query("asc", enum=["asc", "desc"])
+    category: str | None = Query(None, description="Category ID"),
+    sort_by: str | None = Query(
+        None,
+        enum=["name", "price"],
+        description="Sort by field"
+    ),
+    order: str = Query(
+        "asc",
+        enum=["asc", "desc"],
+        description="Sort order"
+    )
 ):
     return await get_menu_items(category, sort_by, order)
 
-
-# ADMIN
+# admin
 @router.post("/")
 async def add_menu_item(
         item: dict,
@@ -34,8 +40,7 @@ async def add_menu_item(
 ):
     return await create_menu_item(item)
 
-
-# ADMIN
+# admin
 @router.put("/{item_id}")
 async def edit_menu_item(
         item_id: str,
@@ -44,8 +49,7 @@ async def edit_menu_item(
 ):
     return await update_menu_item(item_id, item)
 
-
-# ADMIN
+# admin
 @router.delete("/{item_id}")
 async def remove_menu_item(
         item_id: str,
